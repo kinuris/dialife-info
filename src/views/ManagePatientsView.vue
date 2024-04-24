@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { delay } from '@/utils/calc'
+import LoadingView from '../components/reusable/LoadingView.vue'
 import { jwtDecode } from 'jwt-decode'
 import { inject, onMounted, ref } from 'vue'
 import type { VueCookies } from 'vue-cookies'
@@ -7,7 +9,7 @@ const patients = ref<Patient[]>()
 const allPatients = ref<Patient[]>()
 
 const search = ref<string>('')
-const loaded = ref(false)
+const loading = ref(false)
 const searchFocused = ref(false)
 
 const $cookies = inject<VueCookies>('$cookies') as VueCookies
@@ -18,17 +20,23 @@ async function handleAddConnection(name: string, id: string) {
     return
   }
 
-  const result = await fetch(`/dialife-api/patient/assign`, {
-    method: 'POST',
-    body: JSON.stringify({
-      patient_id: id,
-      doctor_id: claims['id']
-    })
-  })
+  loading.value = true
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [result, _] = await Promise.all([
+    fetch(`/dialife-api/patient/assign`, {
+      method: 'POST',
+      body: JSON.stringify({
+        patient_id: id,
+        doctor_id: claims['id']
+      })
+    }),
+    delay(200)
+  ])
 
   await result.json()
   await refresh()
 
+  loading.value = false
   searchFocused.value = false
 }
 
@@ -37,22 +45,27 @@ async function handleRemoveConnection(id: string) {
     return
   }
 
-  const result = await fetch(`/dialife-api/patient/revoke`, {
-    method: 'POST',
-    body: JSON.stringify({
-      patient_id: id,
-      doctor_id: claims['id']
-    })
-  })
+  loading.value = true
+  const [result, _] = await Promise.all([
+    fetch(`/dialife-api/patient/revoke`, {
+      method: 'POST',
+      body: JSON.stringify({
+        patient_id: id,
+        doctor_id: claims['id']
+      })
+    }),
+    delay(200)
+  ])
 
   await result.json()
   await refresh()
-  // window.location.reload()
+  loading.value = false
 }
 
 onMounted(async () => {
-  await refresh()
-  loaded.value = true
+  loading.value = true
+  await Promise.all([refresh(), delay(200)])
+  loading.value = false
 })
 
 async function refresh() {
@@ -76,8 +89,9 @@ function visible(patient: Patient): boolean {
 </script>
 
 <template>
+  <LoadingView :loading />
   <div class="container">
-    <div v-if="loaded" class="patients-container">
+    <div class="patients-container">
       <h3>Manage Patients</h3>
       <h6>Total Number of Patient(s): {{ patients?.length }}</h6>
       <div class="dropdown">
@@ -88,7 +102,7 @@ function visible(patient: Patient): boolean {
           type="text"
           placeholder="Add Patient"
         />
-        <div v-show="loaded" class="dropdown-list">
+        <div class="dropdown-list">
           <div v-show="searchFocused" @click="searchFocused = false" class="dropdown-item cancel">
             Cancel
           </div>
