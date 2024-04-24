@@ -21,8 +21,8 @@ const props = defineProps<{ records: GlucoseType[] }>()
           }}
         </td>
         <td>
-          {{ record.blood_glucose_level }} mmol/L or
-          {{ Number(record.blood_glucose_level) * 18 }} mg/dL
+          {{ Number(record.blood_glucose_level).toFixed(2) }} mmol/L or
+          {{ (Number(record.blood_glucose_level) * 18).toFixed(2) }} mg/dL
         </td>
       </tr>
     </tbody>
