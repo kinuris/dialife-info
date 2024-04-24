@@ -161,7 +161,7 @@ label {
   width: 100%;
   border-radius: 8px;
   padding: 12px 16px;
-  color: black;
+  color: black !important;
   margin-bottom: 12px;
   /* width: max(250px, 25vw); */
 }
