@@ -37,6 +37,7 @@ type MedicationType = {
   medicine_route: string
   medicine_form: string
   medicine_taken_at: string
+  medicine_taken_time?: string
 }
 
 type ActivityType = {
@@ -50,4 +51,15 @@ type NutritionType = {
   nutrition_foods: string
   nutrition_meal_time: string
   nutrition_created_at: string
+}
+
+type DoctorContact = {
+  doctor_number_id: string
+  fk_doctor_id: string
+  number: string
+}
+
+type ProfilePicChange = {
+  message: string
+  link: string
 }
