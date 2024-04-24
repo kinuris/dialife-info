@@ -9,7 +9,8 @@ const props = defineProps<{ records: MedicationType[] }>()
   <table>
     <thead>
       <tr>
-        <td>Date Taken</td>
+        <td>Schedule</td>
+        <td>Actual Time Taken</td>
         <td>Medicine Name</td>
         <td>Medicine Form</td>
         <td>Medicine Route</td>
@@ -21,6 +22,13 @@ const props = defineProps<{ records: MedicationType[] }>()
         <td>
           {{
             `${format(new Date(Date.parse(record.medicine_taken_at)), 'MMM. dd, yyyy - hh:mm a')}`
+          }}
+        </td>
+        <td>
+          {{
+            record.medicine_taken_time
+              ? format(new Date(Date.parse(record.medicine_taken_time)), 'MMM. dd, yyyy - hh:mm a')
+              : '(Not Taken)'
           }}
         </td>
         <td>{{ record.medicine_name }}</td>
