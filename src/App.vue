@@ -1,51 +1,60 @@
 <script setup lang="ts">
 import type { VueCookies } from 'vue-cookies'
 
+import { delay } from './utils/calc'
 import { jwtDecode } from 'jwt-decode'
 import { inject, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import UserNavView from './components/UserNavView.vue'
 
-const $cookies = inject<VueCookies>('$cookies') as VueCookies
-
 const route = useRoute()
+const loading = ref(true)
 const user = ref<User | undefined>(undefined)
 
-let authenticated = false
+const authenticated = ref(false)
 
 watch(
   () => route.path,
   async () => {
     const response = await fetch('/dialife-api/doctor/checkauth', { method: 'POST' })
 
-    if (response.status !== 200 && authenticated) {
-      authenticated = false
+    if (response.status !== 200 && authenticated.value) {
+      authenticated.value = false
       window.location.replace('/')
     }
   }
 )
 
+const $cookies = inject<VueCookies>('$cookies') as VueCookies
 const stop = watch(
   () => [route.path],
   async () => {
-    if ($cookies.get('jwt')) {
-      const claims = jwtDecode($cookies.get('jwt')) as any
-      const response = await fetch(`/dialife-api/doctor/get/${claims['id']}`)
+    const jwtCookie = $cookies.get('jwt')
+
+    if (jwtCookie) {
+      const claims = jwtDecode(jwtCookie) as any
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [response, _] = await Promise.all([
+        fetch(`/dialife-api/doctor/get/${claims['id']}`),
+        delay(200)
+      ])
 
       user.value = await response.json()
 
-      authenticated = true
-
+      authenticated.value = true
       stop()
     }
+
+    loading.value = false
   }
 )
 </script>
 
 <template>
-  <div class="container">
-    <nav v-if="$route.path !== '/login' && $route.path !== '/signup'">
+  <div v-if="!loading" class="container">
+    <nav v-if="$route.path !== ('/login' as string) && $route.path !== ('/signup' as string)">
       <RouterLink to="/">
         <div class="appbar">
           <img src="/src/assets/dialife_launcher_logo.png" alt="Logo" />
@@ -73,18 +82,20 @@ const stop = watch(
       <RouterLink to="/contacts">
         <div v-bind:class="{ active: $route.path === '/contacts' }" class="nav-item">
           <img src="/src/assets/call_log.svg" alt="Patient" />
-          <p>My Contact Numbers</p>
+          <p>Contact Numbers</p>
         </div>
       </RouterLink>
     </nav>
     <div class="content">
       <div class="topbar" v-if="$route.path !== '/login' && $route.path !== '/signup'">
-        <div v-if="user !== undefined">
-          <UserNavView :user />
-        </div>
-        <div v-else>
-          <p>Loading</p>
-        </div>
+        <Transition name="fade">
+          <div v-if="user !== undefined">
+            <UserNavView :user />
+          </div>
+          <div class="topbar-load" v-else>
+            <p>Loading User Data</p>
+          </div>
+        </Transition>
       </div>
       <div class="main-container">
         <RouterView />
@@ -94,6 +105,26 @@ const stop = watch(
 </template>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.topbar-load {
+  position: absolute;
+  font-family: Montserrat;
+  left: 50px;
+  display: flex;
+  place-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 .main-container {
   position: relative;
   z-index: 0;
@@ -112,6 +143,8 @@ const stop = watch(
 .topbar {
   height: 80px;
   position: relative;
+  display: flex;
+  justify-content: end;
   z-index: 1;
   width: 100%;
   border-bottom: 1px solid #70707040;
