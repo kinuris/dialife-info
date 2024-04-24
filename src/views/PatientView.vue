@@ -3,12 +3,15 @@ import { inject, onMounted, ref } from 'vue'
 import PatientRecordsView from '../components/PatientRecordsView.vue'
 import type { VueCookies } from 'vue-cookies'
 import { jwtDecode } from 'jwt-decode'
+import LoadingView from '@/components/reusable/LoadingView.vue'
+import { delay } from '@/utils/calc'
+import router from '@/router'
 
 const props = defineProps<{ patient?: string }>()
 
 const search = ref<string>('')
-const patients = ref<Patient[]>()
-const loaded = ref(false)
+const patients = ref<Patient[]>([])
+const loading = ref(false)
 const searchFocused = ref(false)
 
 const selectedPatient = ref<Patient | null>(null)
@@ -16,23 +19,37 @@ const $cookies = inject<VueCookies>('$cookies') as VueCookies
 const claims = jwtDecode($cookies.get('jwt')) as any
 
 onMounted(async () => {
+  loading.value = true
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [response, _] = await Promise.all([
+    fetch(`/dialife-api/doctor/of/${claims['id']}`),
+    delay(200)
+  ])
+
+  const data = (await response.json()) as Patient[]
+  patients.value = data
+
   if (!props.patient) {
+    loading.value = false
     return
   }
 
-  const response = await fetch(`/dialife-api/patient/get/${props.patient}`)
+  await refresh()
+})
+
+async function refresh() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [response, _] = await Promise.all([
+    fetch(`/dialife-api/patient/get/${props.patient}`),
+    delay(200)
+  ])
   const data = (await response.json()) as Patient
 
   selectedPatient.value = data
-})
+  loading.value = false
+}
 
-onMounted(async () => {
-  const response = await fetch(`/dialife-api/doctor/of/${claims['id']}`)
-  const data = (await response.json()) as Patient[]
-
-  patients.value = data
-  loaded.value = true
-})
+onMounted(async () => {})
 
 function visible(patient: Patient): boolean {
   return patient.name.toLowerCase().includes(search.value.toLowerCase())
@@ -40,6 +57,7 @@ function visible(patient: Patient): boolean {
 </script>
 
 <template>
+  <LoadingView :loading />
   <div class="container">
     <div class="search">
       <div class="dropdown">
@@ -50,20 +68,21 @@ function visible(patient: Patient): boolean {
           type="text"
           placeholder="Find Patient"
         />
-        <div v-show="loaded" class="dropdown-list">
+        <div class="dropdown-list">
           <div v-show="searchFocused" @click="searchFocused = false" class="dropdown-item cancel">
             Cancel
           </div>
           <div
+            v-for="patient in patients"
+            :key="patient.name"
+            v-show="visible(patient) && searchFocused"
             @click="
               () => {
+                router.push('/patients/' + patient.patient_id)
                 selectedPatient = patient
                 searchFocused = false
               }
             "
-            v-show="visible(patient) && searchFocused"
-            v-for="patient in patients"
-            :key="patient.name"
             class="dropdown-item"
           >
             <p>{{ patient.name }}</p>
@@ -78,7 +97,10 @@ function visible(patient: Patient): boolean {
           </template>
           <template v-else> (None) </template>
         </p>
-        <button @click="selectedPatient = null" v-if="selectedPatient">Deselect</button>
+        <button class="deselect" @click="selectedPatient = null" v-if="selectedPatient">
+          Deselect
+        </button>
+        <button class="refresh" @click="refresh" v-if="selectedPatient">Refresh</button>
       </div>
     </div>
     <PatientRecordsView :patient="selectedPatient" />
@@ -90,7 +112,14 @@ function visible(patient: Patient): boolean {
   color: red;
 }
 
-.selected-patient button {
+.refresh {
+  margin-left: 12px;
+  border: 1px solid rgb(54, 102, 193);
+  color: rgb(54, 102, 193);
+  border-radius: 5px;
+}
+
+.deselect {
   margin-left: 12px;
   border: 1px solid red;
   color: red;
