@@ -3,8 +3,9 @@ import { RouterLink } from 'vue-router'
 import { getConsolidated, getLatest } from '@/utils/api'
 import { format } from 'date-fns'
 import { onMounted, ref } from 'vue'
+import { delay } from '@/utils/calc'
 
-const props = defineProps<{ patient: Patient }>()
+const props = defineProps<{ patient: Patient; onLoad?: () => void }>()
 const data = ref<{
   glucose: GlucoseType[]
   bmi: BMIType | null
@@ -13,13 +14,20 @@ const data = ref<{
 const link = `/patients/${props.patient.patient_id}`
 
 onMounted(async () => {
-  const glucoseResponse = await getConsolidated(props.patient.patient_id, 'glucose', 100)
-  const bmiResponse = await getLatest(props.patient.patient_id, 'bmi')
+  const [glucoseResponse, bmiResponse] = await Promise.all([
+    getConsolidated(props.patient.patient_id, 'glucose', 100),
+    getLatest(props.patient.patient_id, 'bmi')
+  ])
 
   if (JSON.stringify(bmiResponse) === '{}') {
     data.value = {
       glucose: glucoseResponse,
       bmi: null
+    }
+
+    if (props.onLoad) {
+      await delay(200)
+      props.onLoad()
     }
 
     return
@@ -28,6 +36,11 @@ onMounted(async () => {
   data.value = {
     glucose: glucoseResponse,
     bmi: bmiResponse
+  }
+
+  if (props.onLoad) {
+    await delay(200)
+    props.onLoad()
   }
 })
 </script>

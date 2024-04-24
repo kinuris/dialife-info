@@ -7,9 +7,12 @@ import MedicationView from './MedicationView.vue'
 
 import { ref, watch } from 'vue'
 import { getConsolidated, getLatest } from '../utils/api'
+import LoadingView from './reusable/LoadingView.vue'
+import { delay } from '@/utils/calc'
 
 const props = defineProps<{ patient: Patient | null }>()
 const selected = ref<PatientRecordType | 'summary'>('summary')
+const loading = ref(false)
 const data = ref<{
   glucose: GlucoseType[]
   activity: ActivityType[]
@@ -36,11 +39,16 @@ watch(
       return
     }
 
-    const glucoseResponse = await getConsolidated(props.patient.patient_id, 'glucose')
-    const bmiResponse = await getLatest(props.patient.patient_id, 'bmi')
-    const activityResponse = await getConsolidated(props.patient.patient_id, 'activity')
-    const medicationResponse = await getConsolidated(props.patient.patient_id, 'medication')
-    const nutritionResponse = await getConsolidated(props.patient.patient_id, 'nutrition')
+    loading.value = true
+    const [glucoseResponse, bmiResponse, activityResponse, medicationResponse, nutritionResponse] =
+      await Promise.all([
+        getConsolidated(props.patient.patient_id, 'glucose'),
+        getLatest(props.patient.patient_id, 'bmi'),
+        getConsolidated(props.patient.patient_id, 'activity'),
+        getConsolidated(props.patient.patient_id, 'medication'),
+        getConsolidated(props.patient.patient_id, 'nutrition'),
+        delay(200)
+      ])
 
     data.value = {
       glucose: glucoseResponse,
@@ -50,12 +58,14 @@ watch(
       medication: medicationResponse
     }
 
+    loading.value = false
     // loading.value = false
   }
 )
 </script>
 
 <template>
+  <LoadingView :loading />
   <div class="main">
     <div class="info">
       <h1>DIALIFE PATIENT RECORD</h1>
