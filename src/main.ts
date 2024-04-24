@@ -7,7 +7,7 @@ import VueCookies from 'vue-cookies'
 
 const app = createApp(App)
 
-app.use(router)
 app.use(VueCookies)
+app.use(router)
 
 app.mount('#app')

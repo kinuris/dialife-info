@@ -25,7 +25,7 @@ const props = defineProps<{ records: NutritionType[] }>()
           {{ record.nutrition_meal_time }}
         </td>
         <td>
-          {{ record.nutrition_foods }}
+          {{ record.nutrition_foods.split(',').join(', ') }}
         </td>
       </tr>
     </tbody>
