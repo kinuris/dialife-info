@@ -58,6 +58,20 @@ const router = createRouter({
       }
     },
     {
+      path: '/chats',
+      name: 'chats',
+      component: () => import('../views/ChatView.vue'),
+      beforeEnter: (to, from, next) => {
+        const $cookies = inject<VueCookies>('$cookies') as VueCookies
+        if ($cookies.get('jwt') === null) {
+          next('/login')
+          return
+        }
+
+        next()
+      }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),

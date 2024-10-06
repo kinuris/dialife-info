@@ -21,6 +21,26 @@ type Patient = {
 
 type PatientRecordType = 'glucose' | 'bmi' | 'nutrition' | 'activity' | 'medication'
 
+type ChatMessage = {
+  chat_message_id: string
+  sender_type: 'doctor' | 'patient'
+  sender_id: string
+  content: string
+  created_at: string
+}
+
+type ChatConnection = {
+  chat_connection_id: string
+  fk_doctor_id: string
+  fk_patient_id: string
+}
+
+type ChatConnection = {
+  chat_connection_id: string
+  fk_doctor_id: string
+  fk_patient_id: string
+}
+
 type GlucoseType = {
   blood_glucose_level: string
   glucose_created_at: string

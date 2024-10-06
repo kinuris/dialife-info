@@ -46,6 +46,7 @@ async function handleRemoveConnection(id: string) {
   }
 
   loading.value = true
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [result, _] = await Promise.all([
     fetch(`/dialife-api/patient/revoke`, {
       method: 'POST',

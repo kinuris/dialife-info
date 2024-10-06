@@ -58,7 +58,7 @@ const stop = watch(
       <RouterLink to="/">
         <div class="appbar">
           <img src="/src/assets/dialife_launcher_logo.png" alt="Logo" />
-          <h1>Dialife</h1>
+          <h1>PulsePilot</h1>
         </div>
       </RouterLink>
       <RouterLink to="/">
@@ -68,7 +68,7 @@ const stop = watch(
         </div>
       </RouterLink>
       <RouterLink to="/patients">
-        <div v-bind:class="{ active: $route.path === '/patients' }" class="nav-item">
+        <div v-bind:class="{ active: $route.path.includes('/patients') }" class="nav-item">
           <img src="/src/assets/patient.svg" alt="Patient" />
           <p>Patients</p>
         </div>
@@ -79,10 +79,16 @@ const stop = watch(
           <p>Manage Patients</p>
         </div>
       </RouterLink>
-      <RouterLink to="/contacts">
+      <!-- <RouterLink to="/contacts">
         <div v-bind:class="{ active: $route.path === '/contacts' }" class="nav-item">
-          <img src="/src/assets/call_log.svg" alt="Patient" />
+          <img src="/src/assets/call_log.svg" alt="Contact Numbers" />
           <p>Contact Numbers</p>
+        </div>
+      </RouterLink> -->
+      <RouterLink to="/chats">
+        <div v-bind:class="{ active: $route.path === '/chats' }" class="nav-item">
+          <img src="/src/assets/chat.svg" alt="Chats" />
+          <p>Chat</p>
         </div>
       </RouterLink>
     </nav>
